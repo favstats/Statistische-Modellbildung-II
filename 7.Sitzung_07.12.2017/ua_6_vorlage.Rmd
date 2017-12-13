@@ -1,0 +1,90 @@
+---
+title: "Übungsaufgabe 6"
+author: "Fabio Votta"
+date: "7.Dezember 2017"
+output: pdf_document
+---
+
+```{r chunks, include=FALSE}
+#Default Options - kann bei Gebrauch geändert werden
+knitr::opts_chunk$set(echo = T # Whether to display code along with its results
+                      , eval = T # Whether to evaluate the code and include its results
+                      , results = "asis" # this at deafult is in end much more efficient
+                      , cache = F # Whether to cache results for future renders (efficient!)
+                      , warning = F # Whether to display errors
+                      , message = F # Whether to display messages
+                      , error = F # maybe turn on
+                      , tidy = F # Whether to reformat code in a tidy way when displaying it
+                      , fig.width = 6 #plot width at 6
+                      , fig.height = 4 #plot height at 4
+                      , fig.align = "center" #plot alignment center
+                      )
+
+options(xtable.comment = FALSE, scipen = 9999)
+```
+
+```{r packages and functions, include=FALSE, echo=F}
+#install.packages("devtools")
+#devtools::install_github("Espanta/lubripack")
+#devtools::install_github("favstats/favstats")
+
+#############
+#NEU NEU NEU#
+#############
+
+#install.packages("pacman")
+
+pacman::p_load(tidyverse, haven, sjPlot, sjmisc,texreg, car, psych, knitr, labelled, broom, favstats)
+```
+
+```{r datensatz einladen, include=FALSE, eval = F}
+allbus <- read_spss("allbus2014.sav")
+allb_sub <- allbus %>% 
+      select(V84, V86, V81, V420)  %>% 
+      rename(alter = V84, 
+       bildung = V86, 
+       geschl  = V81,  
+       einkommen  = V420) %>%
+      mutate(alter0 = alter - 18,
+       bildung_rec = ifelse(bildung == 6 | bildung == 7, NA, bildung - 1),
+       geschl_rec = ifelse(geschl == 2, 0, 1)) %>%
+      mutate_all(as.numeric) # alle Werte als numerisch ausgeben
+
+```
+
+
+## Aufgabe 1
+
+*Bestimmen Sie den minimalen Stichprobenumfang für eine Variablenbeziehung in der Höhe von ca. $f^2$=0.1. Die Variablenbeziehung soll in einem Regressionsmodell mit 20 weiteren Kontrollvariablen mit einer Power von 0.8 und einem Signifikanzniveau von 95% (bzw. Irrtumswahrscheinlichkeit 0.05) getestet werden. Stellen Sie Ihren Denk-/Rechenvorgang dar.*
+
+Tipp: siehe Urban/Mayerl 2011: 159f.
+
+$$N = \frac{\lambda}{f^2}$$
+
+```{r}
+
+
+
+```
+
+
+
+## Aufgabe 2
+
+
+*Was ist unter einem Konfidenzintervall zu verstehen und welchen „praktischen“ Nutzen hat es. Gehen Sie bei Ihrer Antwort auf die berechneten Grenzen des Konfidenzintervalls ein.*
+
+
+
+## Aufgabe 3
+
+*Welche Form von Fehlschluss wird durch ein niedriges Signifikanzniveau „begünstigt“? *
+
+
+
+
+## Aufgabe 4
+
+*In welchen Fällen ist es sinnvoll das Signifikanzniveau höher anzusetzen als 95%? *
+
+

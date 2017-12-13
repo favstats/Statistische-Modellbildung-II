@@ -1,0 +1,119 @@
+---
+title: "Übungsaufgabe 3"
+author: "Fabio Votta"
+date: "15.November 2017"
+output: pdf_document
+---
+
+```{r chunks, include=FALSE}
+#Default Options - kann bei Gebrauch geändert werden
+knitr::opts_chunk$set(echo = T # Whether to display code along with its results
+                      , eval = T # Whether to evaluate the code and include its results
+                      , results = "asis" # this at deafult is in end much more efficient
+                      , cache = F # Whether to cache results for future renders (efficient!)
+                      , warning = F # Whether to display errors
+                      , message = F # Whether to display messages
+                      , error = F # maybe turn on
+                      , tidy = F # Whether to reformat code in a tidy way when displaying it
+                      , fig.width = 6 #plot width at 6
+                      , fig.height = 4 #plot height at 4
+                      , fig.align = "center" #plot alignment center
+                      )
+
+options(xtable.comment = FALSE)
+```
+
+```{r packages and functions, include=FALSE, echo=F}
+#install.packages("devtools")
+#devtools::install_github("Espanta/lubripack")
+#install_github("favstats/favstats")
+
+lubripack::lubripack("tidyverse", "haven", "sjPlot", "sjmisc","texreg", "car","psych", "knitr", "favstats", dependencies = T)
+
+```
+
+## Aufgabe 1
+
+
+*Was ist unter einer Dummy-Variablen zu verstehen, wozu wird sie benötigt und wie ist sie zu interpretieren?*
+
+## Aufgabe 2
+
+```{r datensatz einladen, include=FALSE}
+allbus <- read_spss("allbus2014.sav")
+allb_sub <- allbus %>% 
+      select(V84, V86, V81, V420)  %>% 
+      rename(alter = V84, 
+       bildung = V86, 
+       geschl  = V81,  
+       einkommen  = V420) %>%
+      mutate(alter0 = alter - 18,
+       bildung_rec = ifelse(bildung == 6 | bildung == 7, NA, bildung - 1),
+       geschl_rec = ifelse(geschl == 2, 0, 1)) %>%
+      mutate_all(as.numeric) # alle Werte als numerisch ausgeben
+
+```
+
+
+*Erstellen Sie aus der Bildungsvariablen "eine" Dummyvariable. Führen Sie eine Regression von Einkommen auf Alter, Bildung und Geschlecht durch:*
+
+- `0`   OHNE ABSCHLUSS
+- `1`   VOLKS-,HAUPTSCHULE
+- `2`   MITTLERE REIFE
+- `3`   FACHHOCHSCHULREIFE
+- `4`   HOCHSCHULREIFE
+- `NA`  ANDERER ABSCHLUSS
+- `NA`  NOCH SCHUELER
+- `NA`	KEINE ANGABE
+
+```{r}
+
+
+
+```
+
+
+### Aufgabe 2a
+
+*Interpretieren Sie die Koeffizienten für "Abitur" und "Realschulabschluss". Achten Sie genau auf Ihre Formulierung..*
+
+
+### Aufgabe 2b
+
+*Interpretieren Sie $R^2$ und vergleichen dies mit den Ergebnissen aus der letzten Woche (Aufgabenblatt 2).*
+
+
+## Aufgabe 3 
+
+_Was ist unter einer Moderatorvariable zu verstehen und auf welche Weise(n) kann der Einfluss eines Moderatoreffektes untersucht werden? Erklären Sie kurz das Vorgehen hierbei._
+
+## Aufgabe 4
+
+*Erstellen Sie eine Interaktionsvariable zwischen Geschlecht und Alter und reduzieren Sie vor den folgenden Regressionsanalysen den Datensatz, um die Fälle, bei denen die Geburtenentscheidungen keine besondere Bedeutung mehr für die Gehaltsentwicklung haben sollten (Alter unter 46 Jahren -> SELE IF Alter_0 < 28). Modell 1 enthält dann Alter und Geschlecht, in Modell 2 kommt die Interaktionsvariable hinzu.*
+
+```{r}
+
+
+
+
+
+
+```
+
+
+
+### Aufgabe 4a
+
+_Berechnen	Sie	anhand	von	Modell	1	und	Modell	2	jeweils	das	prognostizierte	Einkommen	eines	Mannes	und	einer	Frau	im	Alter	von	jeweils	30 Jahren._
+
+```{r, results="markup"}
+
+
+
+```
+
+
+### Aufgabe 4b
+
+*Was	ist	dabei	der	Interaktionseffekt	und	wie	lässt	er	sich	inhaltlich	begründen?*
+
