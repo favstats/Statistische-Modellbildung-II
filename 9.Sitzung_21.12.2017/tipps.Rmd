@@ -7,9 +7,9 @@ output: html_document
 
 Die logistische Regression kann anfangs Kopfschmerzen verursachen. Während die Struktur und die Idee der "normalen" Regression entsprechen, kann die Interpretation der b's (d.h. der Regressionskoeffizienten) schwieriger sein.
 
-Dieser Post bietet eine praktische Funktion zum Konvertieren der logits (das wird von glm ausgegeben) in eine Wahrscheinlichkeit.
+Dieser Post bietet eine praktische Funktion zum Konvertieren der logits (das wird von ´glm´ ausgegeben) in eine Wahrscheinlichkeit.
 
-# Packages einladen
+### Packages einladen
 
 ```{r}
 #install.packages("pacman")
@@ -18,9 +18,9 @@ Dieser Post bietet eine praktische Funktion zum Konvertieren der logits (das wir
 pacman::p_load(tidyverse, magrittr, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labelled, broom, favstats)
 ```
 
-# Datensatz einladen
+### Datensatz einladen
 
-```{r setup, include=FALSE}
+```{r setup}
 allbus <- read_spss("allbus2014.sav")
 allb_sub <- allbus %>% 
       select(V84, V86, V81, V419)  %>% 
@@ -35,7 +35,7 @@ allb_sub <- allbus %>%
 
 ```
 
-# Neue Variable: Einkommen Hoch
+### Neue Variable: Einkommen Hoch
 
 ```{r}
 allb_sub %<>%
@@ -46,25 +46,204 @@ allb_sub %>%
   kable()
 ```
 
+> Tipp: Der `%<>%` Operator aus dem `magrittr` package erspart ein wenig Tipparbeit. Stattdessen könnten wir auch (wie üblich) schreiben:
 
 ```{r}
+allb_sub <- allb_sub %>% 
+    mutate(einkommen_h = ifelse(einkommen > 2500, 1, 0))
+```
+
+### Berechnen wir jetzt unser Modell:
+
+Die Syntax für ein logistisches Modell ähnelt sehr der Syntax für ein lineares Modell. Man benutzt einfach die Funktion `glm()` (steht für *generalized linear model*) und spezifiziert am Ende `family = "binomial"` um ein Modell für ein dichotomes logistisches Modell zu berechnen.
+
+```{r, results="asis"}
 mod1 <- glm(einkommen_h ~ bildung_rec + geschl_rec + alter0, 
             data = allb_sub, family = "binomial")
 
-screenreg(mod1)
+htmlreg(mod1)
 ```
 
 > Wenn der Koeffizient (logit) positiv ist, ist der Effekt dieses Prädiktors positiv und umgekehrt.
 
 
-Hier sind die Koeffizienten *positiv*, was anzeigt, dass sowohl höhere Bildung und Alter sowie männliches Geschlecht die Wahrscheinlichkeit erhöht in einer höheren Einkommensklasse zu sein (Einkommen > 2500).
+Hier sind die Koeffizienten *positiv*, was anzeigt, dass sowohl höhere Bildung und Alter sowie männliches Geschlecht die Wahrscheinlichkeit erhöht in einer höheren Einkommensklasse zu sein (Einkommen > 2500). Neben der Signifikanz der Koeffizienten, lässt sich aus dem logit allerdings nicht direkt (zumindest nicht intuitiv) die Stärke des Effekts ablesen sondern nur die **Richtung**.
+
 
 
 Die folgenden 3 Schritte konvertieren einen logit-Koeffizienten in eine Wahrscheinlichkeit:
 
-1. Extrahiere den logit-Koeffizienten
+__1. Extrahiere die logit-Koeffizienten__
 
-2. Berechne e-Funktion auf dem Logit mit `exp()` (du bekommst dann **Odds**)
+__2. Berechne zunächst das $\hat z_i$ (vorhergesagter logit) und dann damit die Odds $e^{\hat z_i}$__
 
-3. Umrechnung der Odds in Wahrscheinlichkeit mit dieser Formel `prob = odds / (1 + odds)`. Sagen wir zum Beispiel `odds = 2/1`, dann ist die Wahrscheinlichkeit `2 / (1 + 2) = 2/3` also `.67` oder $67\%$.
+__3. Berechne die Wahrscheinlichkeit mit Hilfe der Odds $\frac{e^{\hat z_i}}{1 +e^{\hat z_i}}$__
 
+### Didaktisches Beispiel
+
+*Frage: Wie wahrscheinlich ist es, dass eine 30-Jährige Frau mit höchster Bildung ein Netto-Einkommen über 2500 Euro pro Monat bekommt?*
+
+
+__1. Extrahiere die logit-Koeffizienten__
+
+Um es ein bisschen zu vereinfachen habe ich eine kleine Funktion geschrieben, welche die Koeffizienten im *wide* Format ausgibt:
+
+```{r}
+tidy_wide <- function(model) {
+  model_wide <- tidy(model) %>% # tidy extrahiert die Parameter
+  select(term, estimate) %>%    # wir brauchen nur die logit-koeffs
+  spread(term, estimate) %>%    # konvertieren in wide format
+  rename(intercept = `(Intercept)`) # umbenennen
+  return(model_wide)            # gib model_wide aus
+}
+
+```
+
+Probieren wir diese doch einmal aus:
+
+```{r}
+mod1_wide <- tidy_wide(mod1)
+
+mod1_wide %>% 
+  kable()
+```
+
+
+__2. Berechne zunächst das $\hat z_i$ (vorhergesagter logit) auf folgende Art und Weise:__
+
+$$\hat z_i = a + b \times X_i$$
+Die **Odds** (Chancen) sind einfach die eulersche Zahl hoch die logits (wird mit `exp()` berechnet)
+
+$$e^{\hat z_i} = Odds$$
+
+
+```{r}
+mod1_wide %<>% 
+  mutate(z = intercept + 12 * alter0 + 4 * bildung_rec + 0 * geschl_rec)
+
+
+mod1_wide %>% 
+  kable()
+```
+
+
+
+__3. Jetzt wo die odds bekannt sind, können diese einfach in Warscheinlichkeiten umgerechnet werden mit der folgenden Formel: __
+
+$$p_i(y=1) = \frac{1}{1 + e^{- \hat z_i}} = \frac{e^{\hat z_i}}{1 +e^{\hat z_i}} = Wahrscheinlichkeit$$
+
+Das Ergebnis ist die Wahrscheinlichkeit, dass die Ausprägung 1 (hier: hohes Einkommen) unter den angegeben Prädiktoren eintritt.
+
+*Formel 1*
+
+```{r}
+mod1_wide %<>% 
+  mutate(p = 1 / (1 + exp(-z)))
+
+mod1_wide %>% 
+  kable()
+```
+
+*Formel 2*
+
+```{r}
+mod1_wide %<>% 
+  mutate(p = exp(z) / (1 + exp(z)))
+
+mod1_wide %>% 
+  kable()
+```
+
+Oder als Funktion:
+
+```{r}
+logit2prob <- function(logit) { # logit ist der input
+  odds <- exp(logit)          # e hoch logit = odds
+  prob <- odds / (1 + odds)   # odds / 1 + odds = Wahrscheinlichkeit
+  return(prob)               # gibt Wahrscheinlichkeit zurück
+}
+```
+
+Anwendung:
+
+```{r}
+mod1_wide %<>% 
+  mutate(p = logit2prob(z))
+
+mod1_wide %>% 
+  kable()
+```
+
+
+Laut Model 1 beträgt die Wahrscheinlichkeit für eine 30 - Jährige Frau mit höchstem Bildungsabschluss über 2500 Euro im Monat zu verdienen bei 8.06%.
+
+### Andere Methoden
+
+```{r}
+predict(mod1, data.frame(alter0 = 12,
+                         bildung_rec = 4,
+                         geschl_rec = 0), 
+        type = "response")
+```
+
+Denken daran, dass $e^1 ≈ 2.71$. Das heißt, wenn der Logit 1 ist, liegen die Chancen bei 2,7 zu 1, so ist die Wahrscheinlichkeit \frac{2.7}{3.7}, also ca. 0.73 oder 73%.
+
+Ähnlich wichtig ist $e^0 = 1$. Daher liegen die Chancen 1 : 1, d.h. bei 50%.
+
+Wenn der logit also negativ ist, liegt die zugehörige Wahrscheinlichkeit unter 50% und umgekehrt (positives logit <-> Wahrscheinlichkeit über 50%).
+
+Mit dem Package `sjPlot` lässt sich auch eine logistische Regression sehr schön darstellen. Man muss dazu **nichts** zusätzlich angeben, da die Funktion automatisch ein logistisches Modell entdeckt und die entsprechenden Werte zurückgibt.
+
+```{r}
+library(sjPlot)
+
+plot_model(mod1, show.values = T, show.p = T)
+
+```
+
+**Die Wahrscheinlichkeiten mit zunehmenden Alter**
+
+```{r}
+plot_model(mod1, terms = "alter0", type = "pred")
+```
+
+**Die Wahrscheinlichkeiten mit zunehmenden Alter und Bildung**
+
+```{r}
+plot_model(mod1, terms = c("alter0", "bildung_rec"), type = "pred")
+```
+
+**Die Wahrscheinlichkeiten mit zunehmenden Alter, Bildung, getrennt nach Geschlecht**
+
+```{r}
+plot_model(mod1, terms = c("alter0", "bildung_rec", "geschl_rec"), type = "pred")
+```
+
+
+
+```{r , results = 'asis'}
+logit_seq <- seq(-10, 10, by = 2)
+prob_seq <- round(logit2prob(logit_seq), 3)
+
+df <- data.frame(Logit = logit_seq,
+                 Wahrscheinlichkeit = prob_seq)
+kable(df)
+```
+
+
+
+```{r}
+logit_seq <- seq(-10, 10, by = .1)
+
+prob_seq <- logit2prob(logit_seq)
+
+df <- data.frame(Logit = logit_seq,
+                 Wahrscheinlichkeit = prob_seq)
+
+ggplot(df) +
+  aes(x = logit_seq, y = prob_seq) +
+  geom_point(size = 2, alpha = .3) +
+  labs(x = "logit", y = "probability of success")
+```
+  
+  
