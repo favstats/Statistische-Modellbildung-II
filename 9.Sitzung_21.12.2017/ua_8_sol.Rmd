@@ -6,46 +6,48 @@ output: pdf_document
 ---
 
 ```{r chunks, include=FALSE}
-#Default Options - kann bei Gebrauch geändert werden
-knitr::opts_chunk$set(echo = T # Whether to display code along with its results
-                      , eval = T # Whether to evaluate the code and include its results
-                      , results = "asis" # this at deafult is in end much more efficient
-                      , cache = F # Whether to cache results for future renders (efficient!)
-                      , warning = F # Whether to display errors
-                      , message = F # Whether to display messages
-                      , error = F # maybe turn on
-                      , tidy = F # Whether to reformat code in a tidy way when displaying it
-                      , fig.width = 6 #plot width at 6
-                      , fig.height = 4 #plot height at 4
-                      , fig.align = "center" #plot alignment center
-                      )
+# Default Options - kann bei Gebrauch geändert werden
+knitr::opts_chunk$set(
+  echo = T # Whether to display code along with its results
+  , eval = T # Whether to evaluate the code and include its results
+  , results = "asis" # this at deafult is in end much more efficient
+  , cache = F # Whether to cache results for future renders (efficient!)
+  , warning = F # Whether to display errors
+  , message = F # Whether to display messages
+  , error = F # maybe turn on
+  , tidy = F # Whether to reformat code in a tidy way when displaying it
+  , fig.width = 6 # plot width at 6
+  , fig.height = 4 # plot height at 4
+  , fig.align = "center" # plot alignment center
+)
 
 options(xtable.comment = FALSE, scipen = 9999)
 ```
 
 ```{r packages and functions, include=FALSE, echo=F}
 #############
-#NEU NEU NEU#
+# NEU NEU NEU#
 #############
 
-#install.packages("pacman")
-#pacman::p_install_gh("favstats/favstats")
+# install.packages("pacman")
+# pacman::p_install_gh("favstats/favstats")
 
-pacman::p_load(tidyverse, haven, sjPlot, sjmisc,texreg, car, psych, knitr, labelled, broom, favstats)
+pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labelled, broom, favstats)
+
+# Hilfsfunktionen einladen
+source("functions.R")
 ```
 
 ```{r datensatz einladen, include=FALSE, eval = T}
 allbus <- read_spss("allbus2014.sav")
-
 ```
-
-
 
 ## Aufgabe 1
 
 *Erstellen Sie zunächst dichotome Variablen für SPD-Wahl bei der letzten Bundestagswahl (z. B. V810), die Gewerkschaftsmitgliedschaft (z. B. V606) und die ev. Konfessionszugehörigkeit (z. B. V601).*
 
 **`V810` ZWEITSTIMME, LETZTE BUNDESTAGSWAHL**
+
 - 1  CDU-CSU
 - 2  SPD
 - 3  FDP
@@ -58,6 +60,7 @@ allbus <- read_spss("allbus2014.sav")
 - 90 ANDERE PARTEI
 
 **`V606` MITGLIED IN EINER GEWERKSCHAFT?**
+
 - 1 Ja
 - 2 Nein
 
@@ -71,11 +74,13 @@ allbus <- read_spss("allbus2014.sav")
 - 6 KEINER RELIGIONSGEM.
 
 ```{r}
-allbus %<>% 
-  select(V810, V606, V601) %>% 
-  mutate(spd = ifelse(V810 == 2, 1, 0)) %>% 
-  mutate(gewerkschaft = ifelse(V606 ==  1, 1, 0)) %>% 
+allbus %<>%
+  select(V810, V606, V601) %>%
+  mutate(spd = ifelse(V810 == 2, 1, 0)) %>%
+  mutate(gewerkschaft = ifelse(V606 == 1, 1, 0)) %>%
   mutate(evangelisch = ifelse(V601 == 1 | V601 == 2, 1, 0))
+
+janitor::tabyl(allbus$V810)
 ```
 
 
@@ -84,9 +89,19 @@ allbus %<>%
 *Berechnen Sie (anhand eines log. Regressionsmodells) die Wahrscheinlichkeit für ein aktuelles Gewerkschaftsmitglied (Konfession evangelisch) die SPD zu wählen.* 
 
 ```{r}
-mod1 <- glm(spd ~ gewerkschaft + evangelisch, data = allbus, family = "binomial")
+mod1 <- glm(
+  spd ~ gewerkschaft + evangelisch, data = allbus,
+  family = "binomial"
+)
 
 screenreg(mod1)
+
+mod1_wide <- tidy_wide(mod1)
+
+mod1_wide %>%
+  mutate(z = intercept + 1 * gewerkschaft + 1 * evangelisch) %>%
+  mutate(p = logit2prob(z)) %>%
+  kable()
 ```
 
 
@@ -95,7 +110,10 @@ screenreg(mod1)
 *Berechnen Sie (anhand eines log. Regressionsmodells) die Wahrscheinlichkeit für eine Person mit katholischer Konfession (keine Gewerkschaftsmitgliedschaft) die SPD zu wählen.* 
 
 ```{r}
-
+mod1_wide %>%
+  mutate(z = intercept + 0 * gewerkschaft + 0 * evangelisch) %>%
+  mutate(p = logit2prob(z)) %>%
+  kable()
 ```
 
 
@@ -105,7 +123,15 @@ screenreg(mod1)
 *Wie fallen die Odds für diese beiden Personen aus?* 
 
 ```{r}
+mod1_wide %>%
+  mutate(z = intercept + 1 * gewerkschaft + 1 * evangelisch) %>%
+  mutate(odds = 1 / exp(z)) %>%
+  kable()
 
+mod1_wide %>%
+  mutate(z = intercept + 0 * gewerkschaft + 0 * evangelisch) %>%
+  mutate(odds = 1 / exp(z)) %>%
+  kable()
 ```
 
 
@@ -114,7 +140,16 @@ screenreg(mod1)
 *Wie fallen die Odds Ratios bzgl. der Variablen Gewerkschaftsmitgliedschaft und Konfessionszugehörigkeit-evangelisch aus?*
 
 ```{r}
+tidy(mod1) %>%
+  mutate(odds_ratio = exp(estimate)) %>%
+  kable()
+```
+### Visualisierung
 
+```{r}
+plot_model(mod1, show.values = T, show.p = T)
+
+plot_model(mod1, terms = c("evangelisch", "gewerkschaft"), type = "pred")
 ```
 
 
@@ -122,7 +157,6 @@ screenreg(mod1)
 
 *Über welchen Personenkreis kann dieses Modell Aussagen treffen? Denken Sie bei Ihrer Antwort an die Null-Kategorie Ihrer Variablen.*
 
-```{r}
 
-```
+
 

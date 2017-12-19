@@ -1,5 +1,5 @@
 ---
-title: "Tipps für logistische Regression"
+title: "Tipps für logistische Regression in R"
 author: "Fabio Votta"
 date: "18 Dezember 2017"
 output: html_document
@@ -35,7 +35,7 @@ allb_sub <- allbus %>%
 
 ```
 
-### Neue Variable: Einkommen Hoch
+### Neue Variable: hohes Einkommen
 
 ```{r}
 allb_sub %<>%
@@ -112,7 +112,7 @@ mod1_wide %>%
 __2. Berechne zunächst das $\hat z_i$ (vorhergesagter logit) auf folgende Art und Weise:__
 
 $$\hat z_i = a + b \times X_i$$
-Die **Odds** (Chancen) sind einfach die eulersche Zahl hoch die logits (wird mit `exp()` berechnet)
+Wenn wir die vorhergesagten logits ($\hat z_i$) berechnet haben, können wir diese benutzen um die Odds zu erhalten. **Odds** (Chancen) sind einfach die eulersche Zahl hoch die logits (wird mit `exp()` berechnet)
 
 $$e^{\hat z_i} = Odds$$
 
@@ -128,7 +128,7 @@ mod1_wide %>%
 
 
 
-__3. Jetzt wo die odds bekannt sind, können diese einfach in Warscheinlichkeiten umgerechnet werden mit der folgenden Formel: __
+__3. Jetzt wo die Odds bekannt sind, können diese einfach in Warscheinlichkeiten umgerechnet werden mit der folgenden Formel: __
 
 $$p_i(y=1) = \frac{1}{1 + e^{- \hat z_i}} = \frac{e^{\hat z_i}}{1 +e^{\hat z_i}} = Wahrscheinlichkeit$$
 
@@ -154,7 +154,7 @@ mod1_wide %>%
   kable()
 ```
 
-Oder als Funktion:
+*Oder als Funktion:*
 
 ```{r}
 logit2prob <- function(logit) { # logit ist der input
@@ -164,7 +164,7 @@ logit2prob <- function(logit) { # logit ist der input
 }
 ```
 
-Anwendung:
+*Anwendung:*
 
 ```{r}
 mod1_wide %<>% 
@@ -175,9 +175,9 @@ mod1_wide %>%
 ```
 
 
-Laut Model 1 beträgt die Wahrscheinlichkeit für eine 30 - Jährige Frau mit höchstem Bildungsabschluss über 2500 Euro im Monat zu verdienen bei 8.06%.
+Laut Model 1 beträgt die Wahrscheinlichkeit für eine 30 - Jährige Frau mit höchstem Bildungsabschluss über 2500 Euro im Monat zu verdienen 8.06%.
 
-### Andere Methoden
+### Andere Methoden für Wahrscheinlichkeit:
 
 ```{r}
 predict(mod1, data.frame(alter0 = 12,
@@ -186,16 +186,78 @@ predict(mod1, data.frame(alter0 = 12,
         type = "response")
 ```
 
-Denken daran, dass $e^1 ≈ 2.71$. Das heißt, wenn der Logit 1 ist, liegen die Chancen bei 2,7 zu 1, so ist die Wahrscheinlichkeit \frac{2.7}{3.7}, also ca. 0.73 oder 73%.
+### Aber wie berechnet man Odds Ratios?
 
-Ähnlich wichtig ist $e^0 = 1$. Daher liegen die Chancen 1 : 1, d.h. bei 50%.
+Ganz einfach! 
+
+Einfach den dazugehörigen logit-Koeffizienten als Hochzahl für die eulersche Zahl nehmen!
+
+$$e^{b_i} = Odds Ratios$$
+
+Beispiel:
+
+Um schnell die Odds Ratios für unsere Koeffizienten zu erhalten können wir ganz einfach `tidy` aus dem `broom` package benutzen.
+
+```{r}
+tidy(mod1) %>% 
+  kable()
+```
+
+Die Spalte `estimate` gibt den Logit-Koeffizienten an. Daher berechnen wir folgendermaßen die Odds Ratios:
+
+```{r}
+tidy(mod1) %>% 
+  mutate(odds_ratio = exp(estimate)) %>%  
+  kable()
+```
+
+Die Chance ein hohes Einkommen zu haben für jemanden der gar keinen Bildungsabschluss hat ist 2.12 mal höher im Vergleich zu jemanden mit einem Hauptschulabschluss.
+
+Die Odds Ratios sind tatsächlich **gleich** für jeden Sprung auf der x-Achse.
+
+**Ein paar interessante Werte:**
+
+Denke daran, dass $e^1 ≈ 2.71$. Das heißt, wenn der Logit 1 ist, liegen die Chancen bei ca. 2,7 zu 1, so ist die Wahrscheinlichkeit $\frac{2.7}{1 + 2.7}$, also ca. 0.73 oder 73%.
+
+Ähnlich interessant ist ein Logit von 0, was die folgenden Odds ergibt: $e^0 = 1$. Daher liegen die Chancen 1 : 1, d.h. bei 50%.
 
 Wenn der logit also negativ ist, liegt die zugehörige Wahrscheinlichkeit unter 50% und umgekehrt (positives logit <-> Wahrscheinlichkeit über 50%).
 
-Mit dem Package `sjPlot` lässt sich auch eine logistische Regression sehr schön darstellen. Man muss dazu **nichts** zusätzlich angeben, da die Funktion automatisch ein logistisches Modell entdeckt und die entsprechenden Werte zurückgibt.
+Das lässt sich auch schematisch in einer Tabelle darstellen:
+
+```{r , results = 'asis'}
+logit_seq <- seq(-10, 10, by = 2)
+prob_seq <- round(logit2prob(logit_seq), 3)
+
+df <- data.frame(Logit = logit_seq,
+                 Wahrscheinlichkeit = prob_seq)
+kable(df)
+```
+
+Oder als Grafik:
 
 ```{r}
-library(sjPlot)
+logit_seq <- seq(-10, 10, by = .1)
+
+prob_seq <- logit2prob(logit_seq)
+
+df <- data.frame(Logit = logit_seq,
+                 Wahrscheinlichkeit = prob_seq)
+
+ggplot(df) +
+  aes(x = logit_seq, y = prob_seq) +
+  geom_point(size = 2, alpha = .3) +
+  labs(x = "Logit", y = "Wahrscheinlichekit der Ausprägung 1 in y")
+```
+
+
+### Visualisierung mit `sjPlot`
+
+Mit dem Package `sjPlot` lässt sich auch eine logistische Regression sehr schön darstellen. Man muss dazu **nichts** zusätzlich angeben, da die Funktion automatisch ein logistisches Modell entdeckt und die entsprechenden Werte zurückgibt.
+
+
+```{r}
+library(sjPlot) #bzw. in pacman einladen
 
 plot_model(mod1, show.values = T, show.p = T)
 
@@ -220,30 +282,3 @@ plot_model(mod1, terms = c("alter0", "bildung_rec", "geschl_rec"), type = "pred"
 ```
 
 
-
-```{r , results = 'asis'}
-logit_seq <- seq(-10, 10, by = 2)
-prob_seq <- round(logit2prob(logit_seq), 3)
-
-df <- data.frame(Logit = logit_seq,
-                 Wahrscheinlichkeit = prob_seq)
-kable(df)
-```
-
-
-
-```{r}
-logit_seq <- seq(-10, 10, by = .1)
-
-prob_seq <- logit2prob(logit_seq)
-
-df <- data.frame(Logit = logit_seq,
-                 Wahrscheinlichkeit = prob_seq)
-
-ggplot(df) +
-  aes(x = logit_seq, y = prob_seq) +
-  geom_point(size = 2, alpha = .3) +
-  labs(x = "logit", y = "probability of success")
-```
-  
-  
