@@ -24,15 +24,12 @@ options(xtable.comment = FALSE, scipen = 9999)
 ```
 
 ```{r packages and functions, include=FALSE, echo=F}
-#install.packages("devtools")
-#devtools::install_github("Espanta/lubripack")
-#devtools::install_github("favstats/favstats")
-
 #############
 #NEU NEU NEU#
 #############
 
 #install.packages("pacman")
+#pacman::p_install_gh("favstats/favstats")
 
 pacman::p_load(tidyverse, haven, sjPlot, sjmisc,texreg, car, psych, knitr, labelled, broom, favstats)
 ```
@@ -74,7 +71,11 @@ allbus <- read_spss("allbus2014.sav")
 - 6 KEINER RELIGIONSGEM.
 
 ```{r}
-
+allbus %<>% 
+  select(V810, V606, V601) %>% 
+  mutate(spd = ifelse(V810 == 2, 1, 0)) %>% 
+  mutate(gewerkschaft = ifelse(V606 ==  1, 1, 0)) %>% 
+  mutate(evangelisch = ifelse(V601 == 1 | V601 == 2, 1, 0))
 ```
 
 
@@ -83,7 +84,9 @@ allbus <- read_spss("allbus2014.sav")
 *Berechnen Sie (anhand eines log. Regressionsmodells) die Wahrscheinlichkeit für ein aktuelles Gewerkschaftsmitglied (Konfession evangelisch) die SPD zu wählen.* 
 
 ```{r}
+mod1 <- glm(spd ~ gewerkschaft + evangelisch, data = allbus, family = "binomial")
 
+screenreg(mod1)
 ```
 
 

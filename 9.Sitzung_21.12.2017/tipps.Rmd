@@ -1,0 +1,70 @@
+---
+title: "Tipps für logistische Regression"
+author: "Fabio Votta"
+date: "18 Dezember 2017"
+output: html_document
+---
+
+Die logistische Regression kann anfangs Kopfschmerzen verursachen. Während die Struktur und die Idee der "normalen" Regression entsprechen, kann die Interpretation der b's (d.h. der Regressionskoeffizienten) schwieriger sein.
+
+Dieser Post bietet eine praktische Funktion zum Konvertieren der logits (das wird von glm ausgegeben) in eine Wahrscheinlichkeit.
+
+# Packages einladen
+
+```{r}
+#install.packages("pacman")
+#pacman::p_install_gh("favstats/favstats")
+
+pacman::p_load(tidyverse, magrittr, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labelled, broom, favstats)
+```
+
+# Datensatz einladen
+
+```{r setup, include=FALSE}
+allbus <- read_spss("allbus2014.sav")
+allb_sub <- allbus %>% 
+      select(V84, V86, V81, V419)  %>% 
+      rename(alter = V84, 
+       bildung = V86, 
+       geschl  = V81,  
+       einkommen  = V419) %>%
+      mutate(alter0 = alter - 18,
+       bildung_rec = ifelse(bildung == 6 | bildung == 7, NA, bildung - 1),
+       geschl_rec = ifelse(geschl == 2, 0, 1)) %>%
+      mutate_all(as.numeric) # alle Werte als numerisch ausgeben
+
+```
+
+# Neue Variable: Einkommen Hoch
+
+```{r}
+allb_sub %<>%
+    mutate(einkommen_h = ifelse(einkommen > 2500, 1, 0))
+
+allb_sub %>% 
+  janitor::tabyl(einkommen_h) %>% 
+  kable()
+```
+
+
+```{r}
+mod1 <- glm(einkommen_h ~ bildung_rec + geschl_rec + alter0, 
+            data = allb_sub, family = "binomial")
+
+screenreg(mod1)
+```
+
+> Wenn der Koeffizient (logit) positiv ist, ist der Effekt dieses Prädiktors positiv und umgekehrt.
+
+
+Hier sind die Koeffizienten *positiv*, was anzeigt, dass sowohl höhere Bildung und Alter sowie männliches Geschlecht die Wahrscheinlichkeit erhöht in einer höheren Einkommensklasse zu sein (Einkommen > 2500).
+
+
+Die folgenden 3 Schritte konvertieren einen logit-Koeffizienten in eine Wahrscheinlichkeit:
+
+1. Extrahiere den logit-Koeffizienten
+
+2. Berechne e-Funktion auf dem Logit mit `exp()` (du bekommst dann **Odds**)
+
+3. Umrechnung der Odds in Wahrscheinlichkeit mit dieser Formel `prob = odds / (1 + odds)`. Sagen wir zum Beispiel `odds = 2/1`, dann ist die Wahrscheinlichkeit `2 / (1 + 2) = 2/3` also `.67` oder $67\%$.
+
