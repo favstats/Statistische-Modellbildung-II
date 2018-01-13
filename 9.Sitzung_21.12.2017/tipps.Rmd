@@ -4,6 +4,24 @@ author: "Fabio Votta"
 date: "18 Dezember 2017"
 output: html_document
 ---
+```{r chunks, include=FALSE}
+# Default Options - kann bei Gebrauch geändert werden
+knitr::opts_chunk$set(
+  echo = T # Whether to display code along with its results
+  , eval = T # Whether to evaluate the code and include its results
+  , results = "asis" # this at deafult is in end much more efficient
+  , cache = F # Whether to cache results for future renders (efficient!)
+  , warning = F # Whether to display errors
+  , message = F # Whether to display messages
+  , error = F # maybe turn on
+  , tidy = F # Whether to reformat code in a tidy way when displaying it
+  , fig.width = 6 # plot width at 6
+  , fig.height = 4 # plot height at 4
+  , fig.align = "center" # plot alignment center
+)
+
+options(xtable.comment = FALSE, scipen = 9999)
+```
 
 Die logistische Regression kann anfangs Kopfschmerzen verursachen. Während die Struktur und die Idee der "normalen" Regression entsprechen, kann die Interpretation der b's (d.h. der Regressionskoeffizienten) schwieriger sein.
 
@@ -15,7 +33,7 @@ Dieser Post bietet eine praktische Funktion zum Konvertieren der logits (das wir
 #install.packages("pacman")
 #pacman::p_install_gh("favstats/favstats")
 
-pacman::p_load(tidyverse, magrittr, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labelled, broom, favstats)
+pacman::p_load(tidyverse, magrittr, haven, sjPlot, sjmisc, ggeffects, texreg, car, psych, knitr, labelled, broom, margins, favstats)
 ```
 
 ### Datensatz einladen
@@ -281,4 +299,29 @@ plot_model(mod1, terms = c("alter0", "bildung_rec"), type = "pred")
 plot_model(mod1, terms = c("alter0", "bildung_rec", "geschl_rec"), type = "pred")
 ```
 
+### Marginal Effects (unter anderem mit dem `margins package`)
 
+```{r}
+sjp.glm(mod1, type = "eff", facet.grid = F)
+
+
+plot(ggaverage(mod1, terms = c("alter0")))
+
+
+mod1_marg <- margins(mod1)
+mod1_marg %>% 
+  head() %>% 
+  kable()
+
+
+mod1_marg_sum <- summary(mod1_marg)
+mod1_marg_sum %>% 
+  kable()
+
+ggplot(data = mod1_marg_sum) +
+  geom_point(aes(factor, AME)) +
+  geom_errorbar(aes(x = factor, ymin = lower, ymax = upper), width = 0) +
+  geom_hline(yintercept = 0) +
+  theme_minimal() +
+  coord_flip()
+```

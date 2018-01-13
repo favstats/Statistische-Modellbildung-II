@@ -1,7 +1,7 @@
 ---
-title: "Übungsaufgabe 6"
+title: "Übungsaufgabe 8"
 author: "Fabio Votta"
-date: "21.Dezember 2017"
+date: "22.Dezember 2017"
 output: pdf_document
 ---
 
@@ -80,7 +80,6 @@ allbus %<>%
   mutate(gewerkschaft = ifelse(V606 == 1, 1, 0)) %>%
   mutate(evangelisch = ifelse(V601 == 1 | V601 == 2, 1, 0))
 
-janitor::tabyl(allbus$V810)
 ```
 
 
@@ -89,12 +88,10 @@ janitor::tabyl(allbus$V810)
 *Berechnen Sie (anhand eines log. Regressionsmodells) die Wahrscheinlichkeit für ein aktuelles Gewerkschaftsmitglied (Konfession evangelisch) die SPD zu wählen.* 
 
 ```{r}
-mod1 <- glm(
-  spd ~ gewerkschaft + evangelisch, data = allbus,
-  family = "binomial"
-)
+mod1 <- glm(spd ~ gewerkschaft + evangelisch, 
+            data = allbus, family = "binomial")
 
-screenreg(mod1)
+texreg(mod1)
 
 mod1_wide <- tidy_wide(mod1)
 
@@ -104,10 +101,12 @@ mod1_wide %>%
   kable()
 ```
 
+Die Wahrscheinlichkeit für ein evangelisches, aktuelles Gewerkschaftsmitglied, die SPD zu wählen
+liegt bei knapp 40 Prozent.
 
 ### Aufgabe $1a_{ii}$
 
-*Berechnen Sie (anhand eines log. Regressionsmodells) die Wahrscheinlichkeit für eine Person mit katholischer Konfession (keine Gewerkschaftsmitgliedschaft) die SPD zu wählen.* 
+*Berechnen Sie (anhand eines log. Regressionsmodells) die Wahrscheinlichkeit für eine Person mit nicht-evangelischer Konfession (kein Gewerkschaftsmitgliedschaft) die SPD zu wählen.* 
 
 ```{r}
 mod1_wide %>%
@@ -116,7 +115,8 @@ mod1_wide %>%
   kable()
 ```
 
-
+Die Wahrscheinlichkeit für ein nicht-evangelisches Nicht-Gewerkschaftsmitglied die SPD zu wählen
+liegt bei 21.96 Prozent.
 
 ### Aufgabe 1b
 
@@ -134,6 +134,13 @@ mod1_wide %>%
   kable()
 ```
 
+Die Odds für eine Person (A), die sowohl evangelisch, als auch aktuell Gewerkschaftsmitglied ist,
+beträgt: 1,502 Das heißt: Damit ist die Chance, dass diese Person (A) SPD statt einer anderen Partei wählt
+1,5 mal höher.
+
+Die Odds für eine Person (B), die nicht-evangelisch und aktuell kein Gewerkschaftsmitglied ist, beträgt: 3,553
+
+Das heißt: Damit ist die Chance, dass diese Person (B) SPD statt einer anderen Partei wählt 3,5 mal höher.
 
 ### Aufgabe 1c
 
@@ -144,6 +151,14 @@ tidy(mod1) %>%
   mutate(odds_ratio = exp(estimate)) %>%
   kable()
 ```
+
+Im Vergleich zu Personen, die keine evangelische Konfessionsangehörigkeit haben, haben Personen
+mit evangelischer Zugehörigkeit eine 1,64 mal höhere Chance die SPD zu wählen. 
+
+Im Vergleich zu Personen, die
+nicht aktuell Gewerkschaftsmitglied sind, haben Gewerkschaftsmitglieder eine 1,44 mal höhere Chance die
+SPD zu wählen.
+
 ### Visualisierung
 
 ```{r}
@@ -157,6 +172,10 @@ plot_model(mod1, terms = c("evangelisch", "gewerkschaft"), type = "pred")
 
 *Über welchen Personenkreis kann dieses Modell Aussagen treffen? Denken Sie bei Ihrer Antwort an die Null-Kategorie Ihrer Variablen.*
 
-
+Das Modell kann nur Aussagen über Personen mit evangelischer Konfessionszugehörigkeit und
+Personen ohne evangelische Konfessionszugehörigkeit machen. Das heißt, es kann —keine— Aussagen über
+Katholiken, Muslime etc. machen. Genauso kann das Modell nur Aussagen über Personen machen, die
+aktuell Gewerkschaftsmitglieder sind oder keine sind. Also nicht über Personen, die beispielsweise mal welche
+waren oder zukünftig gerne einer Gewerkschaft angehören möchten.
 
 

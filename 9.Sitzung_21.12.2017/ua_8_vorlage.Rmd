@@ -1,54 +1,53 @@
 ---
-title: "Übungsaufgabe 6"
+title: "Übungsaufgabe 8"
 author: "Fabio Votta"
 date: "21.Dezember 2017"
 output: pdf_document
 ---
 
 ```{r chunks, include=FALSE}
-#Default Options - kann bei Gebrauch geändert werden
-knitr::opts_chunk$set(echo = T # Whether to display code along with its results
-                      , eval = T # Whether to evaluate the code and include its results
-                      , results = "asis" # this at deafult is in end much more efficient
-                      , cache = F # Whether to cache results for future renders (efficient!)
-                      , warning = F # Whether to display errors
-                      , message = F # Whether to display messages
-                      , error = F # maybe turn on
-                      , tidy = F # Whether to reformat code in a tidy way when displaying it
-                      , fig.width = 6 #plot width at 6
-                      , fig.height = 4 #plot height at 4
-                      , fig.align = "center" #plot alignment center
-                      )
+# Default Options - kann bei Gebrauch geändert werden
+knitr::opts_chunk$set(
+  echo = T # Whether to display code along with its results
+  , eval = T # Whether to evaluate the code and include its results
+  , results = "asis" # this at deafult is in end much more efficient
+  , cache = F # Whether to cache results for future renders (efficient!)
+  , warning = F # Whether to display errors
+  , message = F # Whether to display messages
+  , error = F # maybe turn on
+  , tidy = F # Whether to reformat code in a tidy way when displaying it
+  , fig.width = 6 # plot width at 6
+  , fig.height = 4 # plot height at 4
+  , fig.align = "center" # plot alignment center
+)
 
 options(xtable.comment = FALSE, scipen = 9999)
 ```
 
 ```{r packages and functions, include=FALSE, echo=F}
-#install.packages("devtools")
-#devtools::install_github("Espanta/lubripack")
-#devtools::install_github("favstats/favstats")
-
 #############
-#NEU NEU NEU#
+# NEU NEU NEU#
 #############
 
-#install.packages("pacman")
+# install.packages("pacman")
+# pacman::p_install_gh("favstats/favstats")
 
-pacman::p_load(tidyverse, haven, sjPlot, sjmisc,texreg, car, psych, knitr, labelled, broom, favstats)
+pacman::p_load(tidyverse, haven, sjPlot, sjmisc, magrittr, texreg, car, psych, knitr, labelled, broom, favstats)
+
+# Hilfsfunktionen einladen
+source("functions.R")
 ```
 
 ```{r datensatz einladen, include=FALSE, eval = T}
 allbus <- read_spss("allbus2014.sav")
-
 ```
-
-
 
 ## Aufgabe 1
 
 *Erstellen Sie zunächst dichotome Variablen für SPD-Wahl bei der letzten Bundestagswahl (z. B. V810), die Gewerkschaftsmitgliedschaft (z. B. V606) und die ev. Konfessionszugehörigkeit (z. B. V601).*
 
 **`V810` ZWEITSTIMME, LETZTE BUNDESTAGSWAHL**
+
 - 1  CDU-CSU
 - 2  SPD
 - 3  FDP
@@ -61,6 +60,7 @@ allbus <- read_spss("allbus2014.sav")
 - 90 ANDERE PARTEI
 
 **`V606` MITGLIED IN EINER GEWERKSCHAFT?**
+
 - 1 Ja
 - 2 Nein
 
@@ -114,12 +114,17 @@ allbus <- read_spss("allbus2014.sav")
 
 ```
 
+### Visualisierung für Bonuspoints ;)
+
+```{r}
+
+```
+
 
 ### Aufgabe 1d
 
 *Über welchen Personenkreis kann dieses Modell Aussagen treffen? Denken Sie bei Ihrer Antwort an die Null-Kategorie Ihrer Variablen.*
 
-```{r}
 
-```
+
 
