@@ -1,0 +1,102 @@
+---
+title: "Tipps für Übungaufgabe 9"
+author: "Fabio Votta"
+date: "11 Januar 2018"
+output: html_document
+---
+
+```{r, include = F}
+
+pacman::p_load(tidyverse, knitr, htmltools)
+
+```
+
+### Datenvorbereitung
+
+```{r, eval = F}
+*Bildung.
+Recode v86 (1=0) (2=1) (3=2) (4=3) (5=4) (else=SYSMIS) into bildung_rec.
+variable labels bildung_rec "Abschluss umkodiert".
+value labels bildung_rec 0"Kein Schulabschluss" 1"Hauptschule" 2"Realschule" 3"Fachhochschulreife" 4"Abi".
+*frequencies bildung_rec.
+
+*Geschlecht.
+Recode v81 (2=0) (1=1) (else=copy) into geschl_rec.
+variable labels geschl_rec "Geschlecht mit w=0".
+value labels geschl_rec 0"weiblich" 1"männlich".
+*frequencies geschl_rec.
+*Wahlabsicht: v609.
+fre v609.
+recode v609 (1=1) (2 thru 90 = 0) into cdu.
+mis val cdu (99).
+fre cdu.
+
+*Kirchgang : v604.
+compute kirchgang = 7 - v604.
+fre kirchgang.
+```
+
+
+### Berechnen wir jetzt unser Modell:
+
+
+
+```{r, eval=F}
+LOGISTIC REGRESSION VARIABLES cdu
+  /METHOD=ENTER bildung_rec geschl_rec 
+  /METHOD=ENTER bildung_rec geschl_rec kirchgang.
+```
+
+
+### Pseudo $R^2$
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m1.htm")
+```
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m2.htm")
+```
+
+### LR - Test
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m3.htm")
+```
+
+### Regressionsdiagnostik
+
+1. Y-Werteverteilung
+
+```{r, eval = F}
+fre cdu.
+
+```
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m4.htm")
+```
+
+2. Vollständigkeit der Information
+
+3. (vollständige) Separation
+
+```{r, eval = F}
+CROSSTABS
+  /TABLES=cdu BY bildung_rec geschl_rec kirchgang
+  /FORMAT=AVALUE TABLES
+  /CELLS=COUNT EXPECTED ROW COLUMN TOTAL 
+  /COUNT ROUND CELL.
+```
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m5.htm")
+```
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m6.htm")
+```
+
+```{r, echo=FALSE, eval=T}
+htmltools::includeHTML("C:/Users/Fabio/Documents/git_proj/Statistische-Modellbildung-II/10.Sitzung_10.01.2018/tables/m7.htm")
+```
