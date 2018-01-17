@@ -53,10 +53,6 @@ ess <- read_spss("esse03_mod.sav")
 
 ```{r}
 
-mod0 <- lme4::lmer(stflife ~ 1 + (1 | Länder), data = ess)
-
-texreg::screenreg(mod0)
-
 
 ```
 
@@ -66,7 +62,7 @@ texreg::screenreg(mod0)
 *Berechnen Sie den ICC anhand des Nullmodells.* 
 
 ```{r}
-sjstats::icc(mod0)
+
 ```
 
 
@@ -83,11 +79,7 @@ sjstats::icc(mod0)
 
 ```{r}
 
-mod1 <- lme4::lmer(stflife ~ Erwerbsstatus + (1 | Länder), data = ess)
 
-texreg::screenreg(mod1)
-
-plot_model(mod1, type = "re", sort.est = T, show.values = T, show.p = T, value.offset = 0.4)
 ```
 
 
@@ -101,7 +93,7 @@ plot_model(mod1, type = "re", sort.est = T, show.values = T, show.p = T, value.o
 *Führen Sie einen Likelihood-Ratio-Test (LRT) zwischen Modell0 und Modell1 durch (Achten Sie drauf, dass für den LRT die ML-Schätzung und nicht die REML gewählt werden muss).*
 
 ```{r}
-anova(mod1, mod0)
+
 ```
 
 
@@ -116,21 +108,7 @@ anova(mod1, mod0)
 
 ```{r}
 
-mod2 <- lme4::lmer(stflife ~ Erwerbsstatus + (Erwerbsstatus | Länder), data = ess)
 
-texreg::screenreg(mod2)
-
-plot_model(mod2, type = "re", sort.est = T, show.values = T, show.p = T, value.offset = 0.4)
-
-plot_model(mod2, type = "std", sort.est = T, show.values = T, show.p = T)
-
-plot_model(mod2, terms = "Erwerbsstatus", type = "pred", sort.est = T, show.values = T, show.p = T)
-
-sjp.lmer(mod2, type = "rs.ri")
-
-lme4::fixef(mod2)
-
-summary(mod2)
 ```
 
 
@@ -139,7 +117,7 @@ summary(mod2)
 *Führen Sie einen Likelihood-Ratio-Test zwischen Modell 1 und Modell 2 durch.*
 
 ```{r}
-anova(mod2, mod1)
+
 ```
 
 

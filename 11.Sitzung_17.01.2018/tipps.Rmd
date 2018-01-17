@@ -1,9 +1,12 @@
 ---
-title: "Tipps für Übungaufgabe 9"
+title: "Tipps für Übungaufgabe 10"
 author: "Fabio Votta"
-date: "11 Januar 2018"
-output: html_document
+date: "17 Januar 2018"
+output:
+  rmdformats::html_clean:
+    highlight: kate
 ---
+
 ```{r chunks, include=FALSE}
 # Default Options - kann bei Gebrauch geändert werden
 knitr::opts_chunk$set(
@@ -30,98 +33,154 @@ options(xtable.comment = FALSE, scipen = 9999)
 #install.packages("pacman")
 #pacman::p_install_gh("favstats/favstats")
 
-pacman::p_load(tidyverse, magrittr, haven, sjPlot, sjmisc, ggeffects, texreg, car, psych, knitr, BaylorEdPsych, lmtest)
+pacman::p_load(tidyverse, magrittr, haven, sjPlot, sjmisc, sjstats, ggeffects, texreg, car, psych, knitr, BaylorEdPsych, lmtest, lme4)
 ```
 
 ### Datensatz einladen
 
-```{r setup}
-allbus <- read_spss("allbus2014.sav")
-allb_sub <- allbus %>% 
-      select(V84, V86, V81, V419)  %>% 
-      rename(alter = V84, 
-       bildung = V86, 
-       geschl  = V81,  
-       einkommen  = V419) %>%
-      mutate(alter0 = alter - 18,
-       bildung_rec = ifelse(bildung == 6 | bildung == 7, NA, bildung - 1),
-       geschl_rec = ifelse(geschl == 2, 0, 1)) %>%
-      mutate_all(as.numeric) # alle Werte als numerisch ausgeben
+```{r datensatz einladen, include=FALSE, eval = T}
+ess <- read_spss("esse03_mod.sav")
 
+#binoculaR::binoculaR(ess)
+
+# WICHTIG: zum Vergleich der Modelle sollten alle Variablen mit der selben Fallzahl geschätz sein.
+ess %<>% 
+  select(impcntr, lrscale, Länder) %>% 
+  na.omit()
 ```
 
-### Neue Variable: hohes Einkommen
+### Abhängige Variable: Ablehnung von Migranten außerhalb Europas
+
+*- impcntr = Allow many/few immigrants from poorer countries outside Europe*
+
+Multilevel-Modelle lassen sich in R mit Hilfe des `lme4` packages sehr einfach spezifizieren. Zunächst testen wir ein Nullmodell auf folgende Art und Weise.
 
 ```{r}
-allb_sub %<>%
-    mutate(einkommen_h = ifelse(einkommen > 2500, 1, 0))
+mod0 <- lmer(impcntr ~ 1 + (1 | Länder), data = ess)
+```
 
-allb_sub %>% 
-  janitor::tabyl(einkommen_h) %>% 
-  kable()
+Die Syntax ist sehr ähnlich zur üblichen OLS. Die 1 stehen jeweils für Platzhalter, da wir keine unabhängigen Variablen spezifizieren. Das einzig wirklich neue ist dieser Part `(1 | Länder)`. Hier wird der *random* Part der Gleichung spezifiziert. Die 1 steht für jeglichen *random slope* (wenn man einen spezifizieren möchte) und der Teil nach dem `|` steht für den *random intercept*  bzw. der Kontext über den unser Modell variieren soll. Dieser Part ist demnach natürlich absolut wichtig um ein Multilevel-Modell zu schätzen, ohne Kontext (Länder, Zeit etc.) kein Mehrebenenmodell!
+
+Die Regressionstabellen Funktionen (`screenreg`, `htmlreg` und `texreg`) können auch hier ganz einfach auf das Modell-Objekt angewandet werden.
+
+```{r}
+texreg::htmlreg(mod0)
 ```
 
 
-### Berechnen wir jetzt unser Modell:
 
-Die Syntax für ein logistisches Modell ähnelt sehr der Syntax für ein lineares Modell. Man benutzt einfach die Funktion `glm()` (steht für *generalized linear model*) und spezifiziert am Ende `family = "binomial"` um ein Modell für ein dichotomes logistisches Modell zu berechnen.
+Angezeigt wird natürlich nur der Intercept, da wir keine UV spezifiziert haben. Unter `Var: Länder (Intercept)` wird die Varianz des random intercepts gezeigt (Level 2 oder Zwischen-Gruppen Varianz) und unter `Var: Residual` findet sich die Varianz des Level 1 Fehlers (oder In-Group Varianz).
 
-```{r, results="asis"}
-mod1 <- glm(einkommen_h ~ bildung_rec, 
-            data = allb_sub, family = "binomial")
+Die Werte für `AIC` and `BIC` sind Gütemaße. Umso kleiner der Wert, desto besser passt das Modell auf die Daten.
 
-htmlreg(mod1)
+Das Tolle an den Tabellenfunktionen von `texreg` ist, dass wir die Tabelle anpassen können: 
 
-mod2 <- glm(einkommen_h ~ bildung_rec + geschl_rec, 
-            data = allb_sub, family = "binomial")
-
-htmlreg(mod2)
+```{r}
+htmlreg(mod0,                               #Regressionsobjekte
+        custom.model.names = c("Nullmodel"),  #Benenne die Modelle
+        custom.coef.names = c("Intercept"), #Benenne die Koeffienten
+        custom.gof.names = c("AIC","BIC",   #Benenne die fit Statistik
+                               "Log Likelihood","Observationen",
+                               "Länder","Zwischen-Gruppen Varianz",
+                               "In-Group Varianz"))
 ```
 
 
-### Pseudo $R^2$
+Wir können nun den Intraklassenkoeffizient per Hand ausrechnen:
+
+$$ICC = \frac{Varianz_{L2}}{Varianz_{L2}+Varianz_{L1}} = \frac{0.13}{0.13+0.75} = 0.1465$$
+oder viel einfacher mit der `icc` Funktion aus dem `sjstats` Package:
+
+```{r, results = 'markup'}
+icc(mod0)
+```
+
+Der ICC sagt aus, dass 14.66% der Varianz von Ablehnung von Migranten außerhalb Europas auf Länderebene liegt. Dadurch übeschreitet diese die Multilevel-Daumenregel von mindestens 10% Varianz auf der 2. Ebene.
+
+ Wir können den *random intercept* des Modells auch sehr einfach visualisieren:
+
+```{r}
+plot_model(mod0, type = "re", sort.est = T, show.values = T, show.p = T, value.offset = 0.4)
+```
+
+Der Forest Plot zeigt die jeweiligen Abweichungen der Länder vom *grand mean*.
+
+## Nun fügen wir eine x-Variable hinzu: Links-Rechts Skala
+
+*- lrscale = Placement on left right scale*
+
+Das funktioniert genau so wie wir es aus der linearen Regression kennen.
 
 ```{r}
 
-data.frame(mod1 = PseudoR2(mod1), mod2 = PseudoR2(mod2)) %>%  
-  kable()
+mod1 <- lme4::lmer(impcntr ~ lrscale + (1 | Länder), data = ess)
+
+htmlreg(list(mod0, mod1),                               #Regressionsobjekte
+        custom.model.names = c("Nullmodel","Model 1"),  #Benenne die Modelle
+        custom.coef.names = c("Intercept","Links-Rechts Skala"), #Benenne die Koeffienten
+        custom.gof.names = c("AIC","BIC",                #Benenne die fit Statistik
+                               "Log Likelihood","Observationen",
+                               "Länder","Zwischen-Gruppen Varianz",
+                               "In-Group Varianz"))
 
 ```
 
-### LR - Test
 
-```{r, results='markup'}
-lrtest(mod2, mod1)
+
+*Wenn die beiden Modelle aufeinander aufbauen, dann vergleicht ein `Likelihood Ratio Test` die beiden Modelle. Weichen die Devianzwerte signifkant voneinander ab, dann kann das komplexere Modell angenommen werden. Hier führen wir den LRT mit der `anova` Funktion durch.*
+
+```{r, results = 'markup'}
+anova(mod1, mod0)
 ```
+Die Ergebnisse des LRT zeigen, dass die Devianz im komplexeren Modell signifikant von der im Nullmodell abweicht, damit kann Modell 1 angenommen werden.
 
-### Regressionsdiagnostik
+> **ACHTUNG:** Der Modellvergleich muss immer mit einer ML Schätzung stattfinden. Die `anova` Funktion refitted das Modell glücklicherweise automatisch. Um die Koeffizienten zu interpretieren wird ein REML Modell geschätzt.
 
-1. Y-Werteverteilung
+## Random Slope Modell
 
-```{r, results='markup'}
-frq(allb_sub$einkommen_h)
+*Im nächsten Schritt können wir noch die unabhängige Variable `lrscale` random setzen und über die Länder variieren lassen.*
 
-```
-
-2. Vollständigkeit der Information
-
-3. (vollständige) Separation
+Um den random slope zu spezifizieren, setzen wir einfach unsere gewünschte UV statt der 1 in dem random Part der Formel ein.
 
 ```{r}
 
+mod2 <- lme4::lmer(impcntr ~ lrscale + (lrscale | Länder), data = ess)
 
-sjt.xtab(allb_sub$einkommen_h, 
-         allb_sub$bildung_rec, 
-         show.exp = TRUE, 
-         show.row.prc = TRUE, 
-         show.cell.prc = TRUE, 
-         show.col.prc = TRUE)
+htmlreg(list(mod0, mod1, mod2),                               #Regressionsobjekte
+        custom.model.names = c("Nullmodell","Modell 1", "Modell 2"),  #Benenne die Modelle
+        custom.coef.names = c("Intercept","Links-Rechts Skala"), #Benenne die Koeffienten
+        custom.gof.names = c("AIC","BIC",                #Benenne die fit Statistik
+                               "Log Likelihood","Observationen",
+                               "Länder","Zwischen-Gruppen Varianz",
+                               "In-Group Varianz", 
+                             "Varianz: Links-Rechts Skala", 
+                             "Kovarianz: Intercept - Links-Rechts Skala"))
 
-sjt.xtab(allb_sub$einkommen_h, 
-         allb_sub$geschl_rec, 
-         show.exp = TRUE, 
-         show.row.prc = TRUE, 
-         show.cell.prc = TRUE, 
-         show.col.prc = TRUE)
 
 ```
+
+Mit der `anova` Funktionen können wir wieder feststellen ob es signifikante Abweichungen gibt:
+
+```{r, results = 'markup'}
+anova(mod2,mod1)
+```
+
+In der Tat erhalten wir durch spezifizieren eines random slope Modells einen besseren Fit. Damit können wir Modell 2 annehmen.
+
+Zusätzlich zu den bekannten Gütemessungen im unteren Teil der Tabelle befindet sich jetzt noch die Varianz des `random slopes` so wie die Kovarianz zwischen dem Intercept und dem random slope. Letzteres zeigt uns an, dass es einen negativen Zusammenhang gibt zwischen den random intercepts und der Links-Rechts Skala (Kovarianz = -0.01). Diese Kovarianz zeigt, dass umso höher die *group mean* Ablehnung in einem Land ist, desto rechter sind die Menschen. Das macht inhaltlich auf jedenfall Sinn.
+
+**Zum Schluss noch ein paar Visualisierungen der random und fixed effects:**
+
+```{r}
+
+plot_model(mod2, type = "re", sort.est = T, show.values = T, show.p = T, value.offset = 0.4)
+
+plot_model(mod2, type = "std", sort.est = T, show.values = T, show.p = T)
+
+plot_model(mod2, terms = "lrscale", type = "pred", sort.est = T, show.values = T, show.p = T)
+
+sjp.lmer(mod2, type = "coef", facet.grid = F, y.offset = 0.55)
+
+
+```
+
