@@ -22,6 +22,7 @@ knitr::opts_chunk$set(
 )
 
 options(xtable.comment = FALSE, scipen = 9999)
+
 ```
 
 ```{r packages and functions, include=FALSE, echo=F}
