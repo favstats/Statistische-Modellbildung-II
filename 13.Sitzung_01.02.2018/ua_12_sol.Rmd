@@ -1,7 +1,7 @@
 ---
-title: "Übungsaufgabe 11"
+title: "Übungsaufgabe 12"
 author: "Fabio Votta"
-date: "25.Januar 2017"
+date: "30.Januar 2018"
 output: pdf_document
 ---
 
@@ -39,7 +39,6 @@ pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labe
 #source("functions.R")
 ```
 
-![](medi.png)____
 
 
 
@@ -51,7 +50,7 @@ pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labe
 *Berechnen Sie die Signifikanz (95%) für alle direkten und indirekten Effekte dieses Modells.*
 
 $$t_{empirisch} = \frac{b}{SE_b}$$
-$$t_{empirisch} < 1.96 = \alpha(0.05)$$
+$$t_{empirisch} > 1.96 = \alpha(0.05)$$
 **Effekte bezeichnen**
 
 ```{r}
@@ -66,13 +65,16 @@ se_yz <- 0.05
 **Direkte Effekte**
 
 ```{r}
-
+b_yx / se_yx #direkter Effekt y - x
+b_zx / se_zx  #direkter Effekt z - x
+b_yz / se_yz #direkter Effekt y - z
 ```
 
 **Indirekte Effekte**
 
 ```{r}
-
+indirekt <- b_zx * b_yz
+indirekt
 ```
 
 **Signifikanz des indirekten Effekts nach Sobel**
@@ -81,6 +83,12 @@ $$SE_{b_{zx \cdot yz}} = \sqrt{b_{yz}^2 \times SE_{b_{zx}}^2 + b_{zx}^2 \times S
 
 ```{r}
 
+se_indirekt <- sqrt((b_yz^2 * se_zx^2) + (b_zx^2 * se_yz^2))
+cat("Indirekter Effekt", indirekt, paste0("(", se_indirekt, ")"))
+se_indirekt
+
+
+indirekt / se_indirekt 
 ```
 
 
@@ -88,7 +96,7 @@ $$SE_{b_{zx \cdot yz}} = \sqrt{b_{yz}^2 \times SE_{b_{zx}}^2 + b_{zx}^2 \times S
 
 *Um welche Form von Mediatormodell handelt es sich wahrscheinlich? Können Sie sich bei dieser Aussage sicher sein?*
 
-
+Gemäß den Signifikanztests des Pfadmodells handelt es sich aller Wahrscheinlichkeit nach um ein totales Mediatormodell. Ob dieser Effekt auch derart bestehen bleibt, wenn andere Variablen in das Modell aufgenommen werden, kann jedoch nicht mit Sicherheit gesagt werden.
 
 ## Aufgabe 3
 
@@ -96,13 +104,15 @@ $$SE_{b_{zx \cdot yz}} = \sqrt{b_{yz}^2 \times SE_{b_{zx}}^2 + b_{zx}^2 \times S
 
 
 ```{r}
-
+b_yx + (b_zx * b_yz)
 ```
 
 
 
 ### Aufgabe 4
-
 *Wie wäre die Signifikanz des totalen Effekts zu berechnen?* 
 
 
+Abzulesen wäre die Signifikanz des totalen Effekts anhand der Regression ohne Mediatorvariable.
+
+Zu berechnen wäre er anhand des Effektkoeffizienten und Standardfehlers des Modells ohne Z-Variable.

@@ -1,7 +1,7 @@
 ---
 title: "Übungsaufgabe 11"
 author: "Fabio Votta"
-date: "25.Januar 2017"
+date: "25.Januar 2018"
 output: pdf_document
 ---
 
@@ -39,7 +39,7 @@ pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labe
 #source("functions.R")
 ```
 
-![](medi.png)____
+![](medi.png)
 
 
 
@@ -50,8 +50,8 @@ pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labe
 
 *Berechnen Sie die Signifikanz (95%) für alle direkten und indirekten Effekte dieses Modells.*
 
-$$t_{krit} = \frac{b}{SE_b}$$
-$$t_{krit} < 1.96 = \alpha(0.05)$$
+$$t_{empirisch} = \frac{b}{SE_b}$$
+$$t_{empirisch} > 1.96 = \alpha(0.05)$$
 **Effekte bezeichnen**
 
 ```{r}
@@ -67,7 +67,7 @@ se_yz <- 0.05
 
 ```{r}
 b_yx / se_yx #direkter Effekt y - x
-b_zx / b_zx  #direkter Effekt z - x
+b_zx / se_zx  #direkter Effekt z - x
 b_yz / se_yz #direkter Effekt y - z
 ```
 
@@ -84,7 +84,10 @@ $$SE_{b_{zx \cdot yz}} = \sqrt{b_{yz}^2 \times SE_{b_{zx}}^2 + b_{zx}^2 \times S
 
 ```{r}
 
-se_indirekt <- sqrt(b_yz^2 * se_zx^2 + b_zx^2 * se_yz^2)
+se_indirekt <- sqrt((b_yz^2 * se_zx^2) + (b_zx^2 * se_yz^2))
+cat("Indirekter Effekt", indirekt, paste0("(", se_indirekt, ")"))
+se_indirekt
+
 
 indirekt / se_indirekt 
 ```
