@@ -1,7 +1,7 @@
 ---
 title: "Übungsaufgabe 12"
 author: "Fabio Votta"
-date: "30.Januar 2018"
+date: "01.Februar 2018"
 output: pdf_document
 ---
 
@@ -33,86 +33,68 @@ options(xtable.comment = FALSE, scipen = 9999)
 # install.packages("pacman")
 # pacman::p_install_gh("favstats/favstats")
 
-pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labelled, broom, magrittr, BaylorEdPsych, lmtest)
+pacman::p_load(tidyverse, haven, sjPlot, sjmisc, texreg, car, psych, knitr, labelled, broom, magrittr, GPArotation)
 
 # Hilfsfunktionen einladen
 #source("functions.R")
 ```
 
 
+Benutzen Sie den ALLBUS 2008 Datensatz
 
-
+```{r}
+allbus2008 <- read_spss("allbus2008.sav")
+```
 
 
 
 ## Aufgabe 1
 
-*Berechnen Sie die Signifikanz (95%) für alle direkten und indirekten Effekte dieses Modells.*
+*Berechnen Sie eine PCA (Oblimin Rotation) mit den Variablen v71 – v83.*
 
-$$t_{empirisch} = \frac{b}{SE_b}$$
-$$t_{empirisch} > 1.96 = \alpha(0.05)$$
-**Effekte bezeichnen**
 
 ```{r}
-b_yx <- -0.02
-se_yx <- 0.06
-b_zx <- 0.45
-se_zx <- 0.02
-b_yz <- 0.12
-se_yz <- 0.05
+obl_pca <- allbus2008 %>% 
+  select(V71:V83) %>% 
+  pca(rotate = "oblimin")
+
+plot(obl_pca$values)
 ```
 
-**Direkte Effekte**
+### Aufgabe 1a
 
-```{r}
-b_yx / se_yx #direkter Effekt y - x
-b_zx / se_zx  #direkter Effekt z - x
-b_yz / se_yz #direkter Effekt y - z
-```
-
-**Indirekte Effekte**
-
-```{r}
-indirekt <- b_zx * b_yz
-indirekt
-```
-
-**Signifikanz des indirekten Effekts nach Sobel**
- 
-$$SE_{b_{zx \cdot yz}} = \sqrt{b_{yz}^2 \times SE_{b_{zx}}^2 + b_{zx}^2 \times SE_{b_{yz}}^2}$$
-
-```{r}
-
-se_indirekt <- sqrt((b_yz^2 * se_zx^2) + (b_zx^2 * se_yz^2))
-cat("Indirekter Effekt", indirekt, paste0("(", se_indirekt, ")"))
-se_indirekt
+*Welche Faktoren/Dimensionen können Sie identifizieren und wie würden Sie diese inhaltlich benennen?*
 
 
-indirekt / se_indirekt 
-```
+### Aufgabe 1b
+
+*Beurteilen Sie alle Variablen hinsichtlich Ihrer Passung auf die identifizierten Faktoren/Dimensionen. Berücksichtigen Sie dabei Konvergenz- und Diskriminanzvalidität, inhaltliche Aspekte als auch Kommunalitäten.*
+
 
 
 ## Aufgabe 2
 
-*Um welche Form von Mediatormodell handelt es sich wahrscheinlich? Können Sie sich bei dieser Aussage sicher sein?*
+*Berechnen Sie evtl. eine zweite PCA (Oblimin Rotation) nur mit den geeigneten Variablen.*
 
-Gemäß den Signifikanztests des Pfadmodells handelt es sich aller Wahrscheinlichkeit nach um ein totales Mediatormodell. Ob dieser Effekt auch derart bestehen bleibt, wenn andere Variablen in das Modell aufgenommen werden, kann jedoch nicht mit Sicherheit gesagt werden.
+
 
 ## Aufgabe 3
 
-*Berechnen Sie den totalen Effekt von Bild Vater auf EK Befragter.*
+*Berechnen Sie eine zweite/dritte PCA (Varimax Rotation) mit den gleichen Variablen aus Aufgabe 2 oder 3.*
 
 
 ```{r}
-b_yx + (b_zx * b_yz)
+allbus2008 %>% 
+  select(V71:V83) %>% 
+  pca(3, rotate = "varimax")
 ```
 
+### Aufgabe 3a
+
+*Welche Unterschiede können Sie erkennen?*
 
 
-### Aufgabe 4
-*Wie wäre die Signifikanz des totalen Effekts zu berechnen?* 
+### Aufgabe 3b
 
 
-Abzulesen wäre die Signifikanz des totalen Effekts anhand der Regression ohne Mediatorvariable.
-
-Zu berechnen wäre er anhand des Effektkoeffizienten und Standardfehlers des Modells ohne Z-Variable.
+*Für welche Rotationsmethode würden Sie sich entscheiden und wieso?*
