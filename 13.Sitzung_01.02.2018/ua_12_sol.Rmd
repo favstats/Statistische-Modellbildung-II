@@ -77,13 +77,15 @@ allbus2008 <- read_spss("allbus2008.sav")
 *Berechnen Sie eine PCA (Oblimin Rotation) mit den Variablen v71 - v83.*
 
 ```{r results = "markup"}
-obl_pca <- allbus2008 %>% 
-  select(V71:V83) %>% 
+pca_data <- allbus2008 %>% 
+  select(V71:V83)
+
+obl_pca <- pca_data %>% 
   pca(rotate = "oblimin")
 
 obl_pca
 
-sjp.pca(allbus2008 %>% select(V71:V83), 
+sjp.pca(pca_data, 
   rotation = "oblimin",  # Wähle die Rotation (ansonsten: "varimax")
   plot.eigen = T)  # Plot um die Eigenvalues anzuzeigen
 
@@ -118,13 +120,12 @@ trust_pca
 
 
 ```{r results = "markup"}
-var_pca <- allbus2008 %>% 
-  select(V71:V83) %>% 
+var_pca <- pca_data %>% 
   pca(rotate = "varimax")
 
 var_pca
 
-sjp.pca(allbus2008 %>% select(V71:V83), 
+sjp.pca(pca_data, 
   rotation = "varimax",  # W?hle die Rotation (ansonsten: "varimax")
   plot.eigen = T)  # Plot um die Eigenvalues anzuzeigen
 

@@ -1,12 +1,12 @@
 ---
-title: "Übungsaufgabe 12"
+title: "?bungsaufgabe 12"
 author: "Fabio Votta"
 date: "01.Februar 2018"
 output: pdf_document
 ---
 
 ```{r chunks, include=FALSE}
-# Default Options - kann bei Gebrauch geändert werden
+# Default Options - kann bei Gebrauch ge?ndert werden
 knitr::opts_chunk$set(
   echo = T # Whether to display code along with its results
   , eval = T # Whether to evaluate the code and include its results
@@ -84,12 +84,12 @@ allbus2008 <- read_spss("allbus2008.sav")
 
 ### Aufgabe 1a
 
-*Welche Faktoren/Dimensionen können Sie identifizieren und wie würden Sie diese inhaltlich benennen?*
+*Welche Faktoren/Dimensionen k?nnen Sie identifizieren und wie w?rden Sie diese inhaltlich benennen?*
 
 
 ### Aufgabe 1b
 
-*Beurteilen Sie alle Variablen hinsichtlich Ihrer Passung auf die identifizierten Faktoren/Dimensionen. Berücksichtigen Sie dabei Konvergenz- und Diskriminanzvalidität, inhaltliche Aspekte als auch Kommunalitäten.*
+*Beurteilen Sie alle Variablen hinsichtlich Ihrer Passung auf die identifizierten Faktoren/Dimensionen. BerÃ¼cksichtigen Sie dabei Konvergenz- und Diskriminanzvalidit?t, inhaltliche Aspekte als auch KommunalitÃ¤ten.*
 
 
 
@@ -118,10 +118,10 @@ allbus2008 <- read_spss("allbus2008.sav")
 
 ### Aufgabe 3a
 
-*Welche Unterschiede können Sie erkennen?*
+*Welche Unterschiede kÃ¶nnen Sie erkennen?*
 
 
 ### Aufgabe 3b
 
 
-*Für welche Rotationsmethode würden Sie sich entscheiden und wieso?*
+*FÃ¼r welche Rotationsmethode w?rden Sie sich entscheiden und wieso?*
